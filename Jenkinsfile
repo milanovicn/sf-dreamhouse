@@ -1,5 +1,6 @@
 pipeline {
     agent any
+    parameters { booleanParam(name: 'DELETE_SCRATCH', defaultValue: true, description: 'Delete scratch after build') }
     environment {
         HUB_ORG = "${env.HUB_ORG_DH}"
         SFDC_HOST = "${env.SFDC_HOST_DH}"
@@ -64,10 +65,16 @@ pipeline {
                     if (rc != 0) {
                         error 'Salesforce push to test scratch org failed.'
                     }
+                    sh "${toolbelt} org assign permset -n dreamhouse"
+                    sh "${toolbelt} org assign permset -n Walkthroughs"
+                    sh "${toolbelt} data tree import -p data/sample-data-plan.json"
                 }
             }
         }
-        /*stage('Delete Test Scratch Org') {
+        stage('Delete Test Scratch Org') {
+            when {
+                expression { params.DELETE_SCRATCH }
+            }
             steps {
                 script {
                     echo '*** Deleting Strach Org***'
@@ -77,6 +84,6 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
     }
 }
