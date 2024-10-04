@@ -60,7 +60,7 @@ pipeline {
         stage('Push Branch Changes To Test Scratch Org') {
             steps {
                 script {
-                    echo '*** Deploying Changes to Strach Org***'
+                    echo '*** Deploying Changes to Strach Org ***'
                     rc = sh returnStatus: true, script: "${toolbelt} project deploy start --target-org ${SCRATCH_NAME}"
                     if (rc != 0) {
                         error 'Salesforce push to test scratch org failed.'
@@ -68,6 +68,21 @@ pipeline {
                     sh "${toolbelt} org assign permset -n dreamhouse"
                     sh "${toolbelt} org assign permset -n Walkthroughs"
                     sh "${toolbelt} data tree import -p data/sample-data-plan.json"
+                }
+            }
+        }
+        stage('Publish Scratch Info') {
+            when {
+                expression { params.DELETE_SCRATCH }
+            }
+            steps {
+                script {
+                    echo '*** Printing Scratch Org Info To File***'
+                    def filePath = 'scratch_info.txt'
+                    def output = sh returnStdout: true, script: "${toolbelt} org display --target-org ${SCRATCH_NAME}"
+                    writeFile (file: filePath, text: output)
+                    echo '*** Archiving artifacts ***'
+                    archiveArtifacts artifacts: filePath, fingerprint: true
                 }
             }
         }
